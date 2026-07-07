@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
 import { User, RefreshToken } from "../models";
+import { sendOTP } from "../services/emailService";
 import { generateAccessToken, generateRefreshToken, DecodedToken } from "../utils/generateToken";
 import ApiResponse from "../utils/apiResponse";
 
@@ -41,10 +42,56 @@ export const registerUser = asyncHandler(async (req: Request, res: Response) => 
     return;
   }
 
-  const user = await User.create({ name, email, password });
+  // 1. Generate a 6-digit OTP and set expiration to 10 minutes from now
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+  // 2. Create the user as unverified
+  const user = await User.create({ 
+    name, 
+    email, 
+    password,
+    otp,
+    otpExpiresAt,
+    isVerified: false
+  });
+
+  // 3. Dispatch the email
+  await sendOTP(email, otp);
+
+  // 4. Return success WITHOUT issuing JWTs yet
+  ApiResponse.success(res, 201, "Registered successfully. Please check your email for the verification code.", {
+    userId: user.id, // Frontend needs this to send to the verify endpoint
+  });
+});
+
+// @route  POST /api/auth/verify-otp
+// @access Public
+export const verifyOTP = asyncHandler(async (req: Request, res: Response) => {
+  const { userId, otp } = req.body as { userId: string; otp: string };
+
+  const user = await User.findByPk(userId);
+  if (!user) {
+    ApiResponse.error(res, 404, "User not found");
+    return;
+  }
+
+  // 1. Validate the OTP and check expiration
+  if (user.otp !== otp || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
+    ApiResponse.error(res, 400, "Invalid or expired verification code");
+    return;
+  }
+
+  // 2. Mark user as verified and clear the OTP fields
+  user.isVerified = true;
+  user.otp = null;
+  user.otpExpiresAt = null;
+  await user.save();
+
+  // 3. Issue the secure tokens now that they have proven ownership
   const accessToken = await issueTokens(res, user);
 
-  ApiResponse.success(res, 201, "Registered successfully", {
+  ApiResponse.success(res, 200, "Account verified successfully", {
     user: { id: user.id, name: user.name, email: user.email, role: user.role },
     accessToken,
   });
@@ -56,8 +103,15 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body as { email: string; password: string };
 
   const user = await User.scope("withPassword").findOne({ where: { email } });
+  
   if (!user || !(await user.matchPassword(password))) {
     ApiResponse.error(res, 401, "Invalid email or password");
+    return;
+  }
+
+  // SECURITY GATE: Prevent login if email is not verified
+  if (!user.isVerified) {
+    ApiResponse.error(res, 403, "Account is not verified. Please check your email for the OTP.");
     return;
   }
 

@@ -17,8 +17,13 @@ class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare role: CreationOptional<UserRole>;
   declare targetRole: CreationOptional<string | null>;
   declare isVerified: CreationOptional<boolean>;
-  declare otp: string;
-  declare otpExpiresAt:Date;
+  
+  // FIX: Added | null and removed the double semicolon
+  declare otp: CreationOptional<string | null>;
+  
+  // FIX: Wrapped in CreationOptional and added | null
+  declare otpExpiresAt: CreationOptional<Date | null>;
+  
   declare readonly createdAt: CreationOptional<Date>;
   declare readonly updatedAt: CreationOptional<Date>;
 
@@ -39,8 +44,8 @@ User.init(
       allowNull: true,
     },
     otpExpiresAt: {
-    type: DataTypes.DATE,
-    allowNull: true,
+      type: DataTypes.DATE,
+      allowNull: true,
     },
     name: {
       type: DataTypes.STRING,
