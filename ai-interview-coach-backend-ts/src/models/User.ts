@@ -17,7 +17,8 @@ class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare role: CreationOptional<UserRole>;
   declare targetRole: CreationOptional<string | null>;
   declare isVerified: CreationOptional<boolean>;
-
+  declare otp: string;
+  declare otpExpiresAt:Date;
   declare readonly createdAt: CreationOptional<Date>;
   declare readonly updatedAt: CreationOptional<Date>;
 
@@ -32,6 +33,14 @@ User.init(
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
+    },
+    otp: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    otpExpiresAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
     },
     name: {
       type: DataTypes.STRING,
