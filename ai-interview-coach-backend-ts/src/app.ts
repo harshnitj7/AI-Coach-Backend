@@ -11,14 +11,19 @@ import interviewRoutes from "./routes/interviewRoutes";
 import resumeRoutes from "./routes/resumeRoutes";
 import roadmapRoutes from "./routes/roadmapRoutes";
 import { notFound, errorHandler } from "./middlewares/errorMiddleware";
+// Near the top with your other imports
+import dailyRoutes from "./routes/dailyRoutes";
+
+// Down with your other app.use() statements
 
 const app: Application = express();
 
 // ---- Global middleware ----
+app.use("/api/daily", dailyRoutes);
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
     credentials: true,
   })
 );
