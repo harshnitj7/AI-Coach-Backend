@@ -48,6 +48,9 @@ app.use("/api", globalLimiter);
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "OK", timestamp: new Date().toISOString() });
 });
+app.get("/", (req, res) => {
+  res.status(200).json({ message: "API is running successfully!" });
+});
 
 // ---- Routes ----
 app.use("/api/auth", authRoutes);
