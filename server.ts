@@ -9,7 +9,17 @@ import "./src/models"; // register all models + associations
 // runtime, since .d.ts files produce no JS output and `require` would fail.
 
 const PORT = process.env.PORT || 5000;
-
+sequelize.sync({ alter: true }) 
+  .then(() => {
+    console.log("✅ Database synced successfully!");
+    
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error("❌ Failed to sync database:", error);
+  });
 const startServer = async (): Promise<void> => {
   await connectDB();
 
