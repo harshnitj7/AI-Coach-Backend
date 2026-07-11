@@ -1,0 +1,12 @@
+const path = require('path');
+
+module.exports = {
+  // Point specifically to the src/config folder
+  'config': path.resolve('src', 'config', 'config.js'), 
+  
+  // Update these paths depending on where your models/migrations are stored.
+  // Assuming they are also inside your 'src' folder:
+  'models-path': path.resolve('src', 'models'),
+  'seeders-path': path.resolve('src', 'seeders'),
+  'migrations-path': path.resolve('src', 'migrations')
+};
