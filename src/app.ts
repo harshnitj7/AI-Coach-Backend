@@ -34,7 +34,7 @@ app.use(cookieParser());
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
-
+app.set('trust proxy', 1);
 // Basic rate limiting to protect auth & AI endpoints from abuse
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
